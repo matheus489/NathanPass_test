@@ -1,0 +1,159 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Usuário
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  company   Company? @relation(fields: [companyId], references: [id])
+  companyId String?
+  bookings  Booking[]
+}
+
+// Modelo de Empresa
+model Company {
+  id           String   @id @default(uuid())
+  name         String
+  industry     String
+  size         Int
+  address      String
+  contactEmail String
+  contactPhone String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relacionamentos
+  merchant     User           @relation(fields: [merchantId], references: [id])
+  merchantId   String
+  employees    User[]
+  subscriptions Subscription[]
+}
+
+// Modelo de Assinatura
+model Subscription {
+  id        String   @id @default(uuid())
+  plan      String
+  status    String
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
+}
+
+// Modelo de Parceiro de Bem-estar
+model WellnessPartner {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  rating      Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  services Service[]
+}
+
+// Modelo de Serviço
+model Service {
+  id             String   @id @default(uuid())
+  name           String
+  description    String
+  duration       Int      // em minutos
+  price          Float
+  category       String
+  maxParticipants Int
+  location       String
+  availability   Json     // Array de horários disponíveis
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relacionamentos
+  partner   WellnessPartner @relation(fields: [partnerId], references: [id])
+  partnerId String
+  bookings  Booking[]
+}
+
+// Modelo de Agendamento
+model Booking {
+  id        String        @id @default(uuid())
+  date      DateTime
+  time      String
+  status    BookingStatus
+  notes     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relacionamentos
+  user    User    @relation(fields: [userId], references: [id])
+  userId  String
+  service Service @relation(fields: [serviceId], references: [id])
+  serviceId String
+}
+
+// Modelo de Transação Financeira
+model FinancialTransaction {
+  id          String          @id @default(uuid())
+  amount      Float
+  type        TransactionType
+  description String
+  createdAt   DateTime        @default(now())
+
+  // Relacionamentos
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
+}
+
+// Modelo de Dados de Bem-estar
+model WellnessData {
+  id          String   @id @default(uuid())
+  date        DateTime
+  serviceType String
+  rating      Int?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  // Relacionamentos
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+}
+
+// Enums
+enum UserRole {
+  MERCHANT // Empresário
+  EMPLOYEE // Funcionário
+  PARTNER  // Parceiro
+}
+
+enum BookingStatus {
+  PENDING    // Pendente
+  CONFIRMED  // Confirmado
+  CANCELLED  // Cancelado
+  COMPLETED  // Concluído
+}
+
+enum TransactionType {
+  SUBSCRIPTION // Assinatura
+  SERVICE      // Serviço
+  REFUND       // Reembolso
+} 
