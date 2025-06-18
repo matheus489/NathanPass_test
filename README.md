@@ -2,9 +2,135 @@
 
 NathanPass é uma plataforma integrada de bem-estar e gestão para pequenas e médias empresas, oferecendo soluções para comerciantes, colaboradores e parceiros.
 
-## Estrutura do Projeto
+## Estruturação do Projeto
 
-O projeto é dividido em três aplicações principais e um conjunto de pacotes compartilhados:
+O projeto segue uma arquitetura de monorepo, utilizando uma estrutura organizada em pacotes compartilhados e aplicações independentes:
+
+```
+nathanpass/
+├── apps/                    # Aplicações do projeto
+│   ├── api/                # Backend (Node.js/Express)
+│   ├── admin/              # Painel administrativo (React)
+│   └── web/                # Portal web (Next.js)
+│
+├── packages/               # Pacotes compartilhados
+│   ├── database/          # Configuração do Prisma e modelos
+│   ├── ui/                # Componentes de UI compartilhados
+│   └── utils/             # Funções utilitárias
+│
+└── package.json           # Configuração do monorepo
+```
+
+### Estrutura Detalhada de Aplicações
+
+#### 1. API (Backend)
+```
+apps/api/
+├── src/
+│   ├── controllers/       # Lógica de negócios
+│   │   ├── auth.js       # Autenticação
+│   │   ├── merchant.js   # Gestão de comerciantes
+│   │   └── partner.js    # Gestão de parceiros
+│   │
+│   ├── middlewares/      # Middlewares Express
+│   │   ├── auth.js       # Autenticação
+│   │   └── error-handler.js
+│   │
+│   ├── routes/           # Rotas da API
+│   │   ├── auth.js
+│   │   ├── merchant.js
+│   │   └── partner.js
+│   │
+│   ├── config/           # Configurações
+│   │   └── index.js
+│   │
+│   └── index.js          # Ponto de entrada
+│
+├── prisma/               # Schema do banco de dados
+│   └── schema.prisma
+│
+├── .env                  # Variáveis de ambiente
+└── package.json
+```
+
+#### 2. Admin (Painel Administrativo)
+```
+apps/admin/
+├── src/
+│   ├── pages/           # Páginas do admin
+│   │   ├── Dashboard.jsx
+│   │   ├── Employees.jsx
+│   │   ├── Partners.jsx
+│   │   ├── Merchants.jsx
+│   │   └── Login.jsx
+│   │
+│   ├── components/      # Componentes React
+│   │   └── Layout.jsx
+│   │
+│   ├── services/        # Serviços e integrações
+│   │   └── api.js
+│   │
+│   ├── contexts/        # Contextos React
+│   │   └── AuthContext.jsx
+│   │
+│   ├── App.jsx          # Componente principal
+│   └── main.jsx         # Ponto de entrada
+│
+├── public/              # Arquivos estáticos
+├── index.html
+└── package.json
+```
+
+#### 3. Web (Portal Web)
+```
+apps/web/
+├── src/
+│   ├── app/            # Páginas e rotas (Next.js App Router)
+│   │   ├── page.jsx    # Página inicial
+│   │   ├── layout.jsx  # Layout principal
+│   │   ├── globals.css # Estilos globais
+│   │   │
+│   │   ├── merchant/   # Rotas do portal do comerciante
+│   │   │   ├── page.jsx
+│   │   │   └── layout.jsx
+│   │   │
+│   │   ├── employee/   # Rotas do portal do colaborador
+│   │   │   ├── page.jsx
+│   │   │   └── layout.jsx
+│   │   │
+│   │   └── partner/    # Rotas do portal do parceiro
+│   │       ├── page.jsx
+│   │       └── layout.jsx
+│   │
+│   ├── components/     # Componentes React
+│   │   ├── ui/        # Componentes de UI
+│   │   │   ├── button.jsx
+│   │   │   ├── card.jsx
+│   │   │   └── ...
+│   │   │
+│   │   ├── forms/     # Componentes de formulário
+│   │   │   ├── login-form.jsx
+│   │   │   └── ...
+│   │   │
+│   │   └── layout/    # Componentes de layout
+│   │       ├── header.jsx
+│   │       ├── footer.jsx
+│   │       └── ...
+│   │
+│   ├── lib/           # Utilitários e configurações
+│   │   ├── utils.js   # Funções utilitárias
+│   │   └── constants.js
+│   │
+│   └── styles/        # Estilos adicionais
+│       └── theme.js   # Configuração de tema
+│
+├── public/            # Arquivos estáticos
+│   ├── images/
+│   └── fonts/
+│
+├── next.config.js     # Configuração do Next.js
+└── package.json
+```
 
 ### Pacotes Compartilhados (`packages/`)
 Pacotes reutilizáveis compartilhados entre as aplicações:
@@ -26,69 +152,108 @@ Pacotes reutilizáveis compartilhados entre as aplicações:
   - Funções utilitárias compartilhadas
   - Funções auxiliares para uso em todas as aplicações
 
-### 1. API (`apps/api/`)
-Backend da aplicação, responsável por toda a lógica de negócios e integração com o banco de dados.
-
-- **`src/controllers/`**: Controladores que gerenciam as requisições HTTP
-  - `auth.js`: Autenticação e autorização
-  - `merchant.js`: Gestão de comerciantes e empresas
-  - `partner.js`: Gestão de parceiros e serviços
-
-- **`src/middlewares/`**: Middlewares da aplicação
-  - `auth.js`: Middleware de autenticação
-  - `error-handler.js`: Tratamento de erros
-
-- **`src/routes/`**: Definição das rotas da API
-  - `auth.js`: Rotas de autenticação
-  - `merchant.js`: Rotas para comerciantes
-  - `partner.js`: Rotas para parceiros
-
-### 2. Admin (`apps/admin/`)
-Painel administrativo para gerenciamento do sistema.
-
-- **`src/pages/`**: Páginas do painel admin
-  - `Dashboard.jsx`: Visão geral do sistema
-  - `Employees.jsx`: Gestão de colaboradores
-  - `Partners.jsx`: Gestão de parceiros
-  - `Merchants.jsx`: Gestão de comerciantes
-  - `Login.jsx`: Página de login
-
-- **`src/components/`**: Componentes reutilizáveis
-  - `Layout.jsx`: Layout principal do admin
-
-- **`src/services/`**: Serviços de integração com a API
-  - `api.js`: Configuração e funções de API
-
-- **`src/contexts/`**: Contextos do React
-  - `AuthContext.jsx`: Contexto de autenticação
-
-### 3. Web (`apps/web/`)
-Aplicação web principal, portal de acesso para todos os usuários.
-
-- **`src/app/`**: Páginas da aplicação web
-  - `page.jsx`: Página inicial
-  - `layout.jsx`: Layout principal
-  - `globals.css`: Estilos globais
-
-- **`src/components/`**: Componentes reutilizáveis
-  - `theme-provider.jsx`: Provedor de tema
-
 ## Tecnologias Utilizadas
 
-- **Backend**:
-  - Node.js
-  - Express
-  - Prisma (ORM)
-  - MySQL
-  - JWT para autenticação
+### Tecnologias Atuais
 
-- **Frontend**:
+#### Backend
+- **Runtime e Framework**
+  - Node.js
+  - Express.js
+  - JavaScript (ES6+)
+
+#### Banco de Dados
+- **ORM e Migrations**
+  - Prisma
+  - MySQL
+
+#### Frontend
+- **Frameworks e Bibliotecas**
   - React
   - Next.js
   - Tailwind CSS
   - Shadcn/ui
+  - React Query (para gerenciamento de estado e cache)
+
+#### Autenticação e Segurança
+- JWT (JSON Web Tokens)
+- Bcrypt para hash de senhas
+- CORS
+- Helmet para segurança HTTP
+
+#### Desenvolvimento e DevOps
+- Docker
+- Docker Compose
+- Git
+- npm (gerenciador de pacotes)
+
+### Tecnologias Potenciais para Implementação
+
+#### Backend
+- **Melhorias de Performance**
+  - Redis para cache
+  - GraphQL para APIs mais flexíveis
+  - TypeScript para tipagem estática
+  - NestJS como framework alternativo
+
+#### Banco de Dados
+- **Escalabilidade**
+  - MongoDB para dados não estruturados
+  - PostgreSQL como alternativa ao MySQL
+  - Elasticsearch para busca avançada
+
+#### Frontend
+- **Melhorias de UX/UI**
+  - Framer Motion para animações
+  - React Hook Form para formulários
+  - Zustand ou Redux Toolkit para gerenciamento de estado
+  - Storybook para documentação de componentes
+  - Jest e React Testing Library para testes
+
+#### DevOps e Infraestrutura
+- **CI/CD e Monitoramento**
+  - GitHub Actions ou GitLab CI
+  - AWS ou Google Cloud Platform
+  - Kubernetes para orquestração
+  - Prometheus e Grafana para monitoramento
+  - Sentry para rastreamento de erros
+
+#### Segurança
+- **Autenticação Avançada**
+  - OAuth 2.0
+  - 2FA (Autenticação de dois fatores)
+  - Passport.js para estratégias de autenticação
+
+#### Integrações
+- **Serviços Externos**
+  - Stripe para pagamentos
+  - SendGrid ou AWS SES para emails
+  - AWS S3 para armazenamento de arquivos
+  - Twilio para SMS e notificações
 
 ## Como Iniciar
+
+### Usando Docker (Recomendado)
+
+1. Certifique-se de ter o Docker e Docker Compose instalados
+
+2. Clone o repositório:
+   ```bash
+   git clone https://github.com/seu-usuario/nathanpass.git
+   cd nathanpass
+   ```
+
+3. Inicie os containers:
+   ```bash
+   docker-compose up -d
+   ```
+
+4. Acesse as aplicações:
+   - API: http://localhost:3001
+   - Admin: http://localhost:3000
+   - Web: http://localhost:3002
+
+### Desenvolvimento Local
 
 1. Instale as dependências:
    ```bash
@@ -152,4 +317,44 @@ Aplicação web principal, portal de acesso para todos os usuários.
 - Gestão de serviços
 - Agendamentos
 - Relatórios de utilização
-- Configurações de disponibilidade 
+- Configurações de disponibilidade
+
+## Deploy
+
+O projeto utiliza GitHub Actions para CI/CD. Os workflows estão configurados para fazer deploy automático quando houver push na branch `main`.
+
+### Configuração do Deploy
+
+1. Configure os secrets no GitHub:
+   - `SSH_HOST`: Host do servidor
+   - `SSH_USERNAME`: Usuário SSH
+   - `SSH_KEY`: Chave SSH privada
+   - `DATABASE_URL`: URL do banco de dados
+   - `JWT_SECRET`: Chave secreta para JWT
+   - `API_URL`: URL da API em produção
+
+2. Estrutura de diretórios no servidor:
+   ```
+   /var/www/
+   ├── nathanpass/     # Código fonte
+   ├── admin/         # Build do Admin
+   └── web/           # Build do Web
+   ```
+
+3. Configuração do servidor:
+   - Node.js 18
+   - PM2 para gerenciamento de processos
+   - Nginx como proxy reverso
+   - MySQL 8.0
+
+### Workflows
+
+- `api-deploy.yml`: Deploy da API
+- `admin-deploy.yml`: Deploy do Admin
+- `web-deploy.yml`: Deploy do Web
+
+Cada workflow é acionado quando há alterações nos respectivos diretórios:
+- `apps/api/**` para API
+- `apps/admin/**` para Admin
+- `apps/web/**` para Web
+- `packages/**` para pacotes compartilhados 

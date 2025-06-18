@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Banco de dados MySQL
+  db:
+    image: mysql:8.0
+    container_name: nathanpass-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nathanpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - nathanpass-network
+
+  # API Node.js
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: nathanpass-api
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=mysql://root:root@db:3306/nathanpass
+      - JWT_SECRET=your-super-secret-key-here
+      - JWT_EXPIRES_IN=7d
+      - CORS_ORIGIN=http://localhost:3000
+    depends_on:
+      - db
+    networks:
+      - nathanpass-network
+
+  # Admin Panel (React)
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    container_name: nathanpass-admin
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:3001/api
+    depends_on:
+      - api
+    networks:
+      - nathanpass-network
+
+  # Web Portal (Next.js)
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: nathanpass-web
+    restart: always
+    ports:
+      - "3002:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api
+    depends_on:
+      - api
+    networks:
+      - nathanpass-network
+
+volumes:
+  mysql_data:
+
+networks:
+  nathanpass-network:
+    driver: bridge 

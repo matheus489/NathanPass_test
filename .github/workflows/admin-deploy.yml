@@ -1,0 +1,50 @@
+name: Deploy Admin
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/admin/**'
+      - 'packages/ui/**'
+      - '.github/workflows/admin-deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Dependencies
+      run: |
+        npm install
+        
+    - name: Build UI Package
+      run: |
+        npm run build --workspace=@nathanpass/ui
+        
+    - name: Build Admin
+      run: |
+        npm run build --workspace=apps/admin
+      env:
+        VITE_API_URL: ${{ secrets.API_URL }}
+        
+    - name: Deploy to Production
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          cd /var/www/nathanpass
+          git pull origin main
+          npm install
+          npm run build --workspace=@nathanpass/ui
+          npm run build --workspace=apps/admin
+          sudo cp -r apps/admin/dist/* /var/www/admin/
+          sudo systemctl restart nginx 
