@@ -24,7 +24,7 @@ export default function WellnessPage() {
   // }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 flex flex-col items-center">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10">
       <div className="container max-w-6xl mx-auto py-12 px-4 space-y-10">
         <div className="flex items-center gap-4 bg-gradient-to-r from-primary/10 to-primary/5 p-8 rounded-2xl shadow-lg mb-8">
           <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-primary-foreground shadow-lg">
@@ -53,16 +53,22 @@ export default function WellnessPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="content" className="space-y-4">
-            <ContentLibrary />
+          <TabsContent value="content">
+            <div className="mt-12 flex flex-col gap-8">
+              <ContentLibrary />
+            </div>
           </TabsContent>
 
-          <TabsContent value="partners" className="space-y-4">
-            <PartnerMap />
+          <TabsContent value="partners">
+            <div className="mt-12 flex flex-col gap-8">
+              <PartnerMap />
+            </div>
           </TabsContent>
 
-          <TabsContent value="bookings" className="space-y-4">
-            <BookingList />
+          <TabsContent value="bookings">
+            <div className="mt-12 flex flex-col gap-8">
+              <BookingList />
+            </div>
           </TabsContent>
         </Tabs>
       </div>

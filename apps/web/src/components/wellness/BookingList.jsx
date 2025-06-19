@@ -100,20 +100,20 @@ export function BookingList({ userId }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="w-full grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {bookings.map((booking) => {
           const statusInfo = getStatusInfo(booking.status);
           const StatusIcon = statusInfo.icon;
 
           return (
-            <Card key={booking.id} className="group hover:shadow-lg transition-shadow duration-200">
+            <Card key={booking.id} className="group hover:shadow-lg transition-shadow duration-200 w-full h-full flex flex-col">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="group-hover:text-primary transition-colors">
+                    <CardTitle className="group-hover:text-primary transition-colors truncate break-words">
                       {booking.service}
                     </CardTitle>
-                    <CardDescription className="line-clamp-2 mt-1">
+                    <CardDescription className="line-clamp-2 break-words mt-1">
                       {booking.partner}
                     </CardDescription>
                   </div>

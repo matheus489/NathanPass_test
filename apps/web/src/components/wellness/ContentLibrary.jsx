@@ -77,10 +77,11 @@ export function ContentLibrary() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4">
+    <div className="flex flex-col gap-8 w-full">
+      {/* Filtros */}
+      <div className="flex flex-col sm:flex-row gap-4 w-full">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
           <Input
             placeholder="Buscar conteúdo..."
             value={searchQuery}
@@ -100,22 +101,22 @@ export function ContentLibrary() {
           ))}
         </Select>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Grid de cards */}
+      <div className="w-full grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {filteredContents.map((content) => {
           const CategoryIcon = getCategoryIcon(content.category);
           return (
-            <Card key={content.id} className="group hover:shadow-lg transition-shadow duration-200">
+            <Card key={content.id} className="group hover:shadow-lg transition-shadow duration-200 w-full h-full flex flex-col">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                     <CategoryIcon className="w-4 h-4 text-primary" />
                   </div>
-                  <CardTitle className="group-hover:text-primary transition-colors">
+                  <CardTitle className="group-hover:text-primary transition-colors truncate break-words">
                     {content.title}
                   </CardTitle>
                 </div>
-                <CardDescription className="line-clamp-2">
+                <CardDescription className="line-clamp-2 break-words">
                   {content.description}
                 </CardDescription>
               </CardHeader>
@@ -135,7 +136,6 @@ export function ContentLibrary() {
           );
         })}
       </div>
-
       {filteredContents.length === 0 && (
         <div className="text-center py-12">
           <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
