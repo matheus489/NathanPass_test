@@ -1,7 +1,9 @@
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
+import { AuthProvider } from "@/components/providers/auth-provider"
+import { ToastProvider } from "@/components/providers/toast-provider"
+import { Navbar } from "@/components/Navbar"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -20,8 +22,15 @@ export default function RootLayout({ children }) {
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster />
+          <AuthProvider>
+            <div className="min-h-screen bg-background">
+              <Navbar />
+              <main className="min-h-screen">
+                {children}
+              </main>
+              <ToastProvider />
+            </div>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

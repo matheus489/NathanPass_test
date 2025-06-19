@@ -8,9 +8,6 @@ const nextConfig = {
       "storage.googleapis.com", // For Google Cloud Storage
     ],
   },
-  experimental: {
-    serverActions: true,
-  },
 }
 
 module.exports = nextConfig 
