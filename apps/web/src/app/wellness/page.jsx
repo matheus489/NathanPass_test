@@ -7,6 +7,7 @@ import { ContentLibrary } from '@/components/wellness/ContentLibrary';
 import { PartnerMap } from '@/components/wellness/PartnerMap';
 import { BookingList } from '@/components/wellness/BookingList';
 import { Heart, BookOpen, MapPin, Calendar } from 'lucide-react';
+import SupportChatbot from "@/components/SupportChatbot";
 
 export default function WellnessPage() {
   const { user } = useAuth();
@@ -68,6 +69,7 @@ export default function WellnessPage() {
           {activeTab === 'bookings' && <BookingList />}
         </div>
       </div>
+      <SupportChatbot />
     </div>
   );
 } 

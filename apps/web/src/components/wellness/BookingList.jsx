@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 export function BookingList({ userId }) {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [bookingError, setBookingError] = useState("");
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   // Carregar agendamentos do localStorage
   useEffect(() => {
@@ -30,11 +32,17 @@ export function BookingList({ userId }) {
   }, []);
 
   const handleCancelBooking = (bookingId) => {
-    const updated = bookings.filter((booking) => booking.id !== bookingId);
-    setBookings(updated);
-    localStorage.setItem('wellness_bookings', JSON.stringify(updated));
-    toast.success('Agendamento cancelado com sucesso!');
-    window.dispatchEvent(new Event('wellness_bookings_update'));
+    setBookingError("");
+    setBookingLoading(true);
+    // TODO: trocar por chamada à API futuramente
+    setTimeout(() => {
+      const updated = bookings.filter((booking) => booking.id !== bookingId);
+      setBookings(updated);
+      localStorage.setItem('wellness_bookings', JSON.stringify(updated));
+      setBookingLoading(false);
+      toast.success('Agendamento cancelado com sucesso!');
+      window.dispatchEvent(new Event('wellness_bookings_update'));
+    }, 600);
   };
 
   const getStatusInfo = (status) => {
@@ -123,9 +131,10 @@ export function BookingList({ userId }) {
                     variant="destructive"
                     className="w-full group-hover:bg-destructive/90 transition-colors"
                     onClick={() => handleCancelBooking(booking.id)}
+                    disabled={bookingLoading}
                   >
                     <X className="w-4 h-4 mr-2" />
-                    Cancelar Agendamento
+                    {bookingLoading ? 'Cancelando...' : 'Cancelar Agendamento'}
                   </Button>
                 )}
               </CardFooter>
@@ -143,6 +152,8 @@ export function BookingList({ userId }) {
           </p>
         </div>
       )}
+
+      {bookingError && <div className="text-red-600 text-sm mt-2">{bookingError}</div>}
     </div>
   );
 } 

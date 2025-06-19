@@ -35,6 +35,8 @@ export function PartnerMap() {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingPartner, setBookingPartner] = useState(null);
   const [bookingData, setBookingData] = useState({ service: '', date: '', time: '' });
+  const [partnerError, setPartnerError] = useState("");
+  const [partnerLoading, setPartnerLoading] = useState(false);
 
   useEffect(() => {
     // Tentar pegar localização real do usuário
@@ -118,16 +120,32 @@ export function PartnerMap() {
 
   function handleAddPartner(e) {
     e.preventDefault();
-    if (!newPartner.name || !newPartner.address || !newPartner.phone || !newPartner.hours || !newPartner.lat || !newPartner.lng) return;
-    setPartners([
-      ...partners,
-      { ...newPartner, id: Date.now(), lat: parseFloat(newPartner.lat), lng: parseFloat(newPartner.lng) }
-    ]);
-    setNewPartner({ name: "", description: "", address: "", phone: "", hours: "", lat: "", lng: "", rating: 5.0 });
+    setPartnerError("");
+    if (!newPartner.name || !newPartner.address || !newPartner.phone || !newPartner.hours || !newPartner.lat || !newPartner.lng) {
+      setPartnerError("Preencha todos os campos.");
+      return;
+    }
+    if (partners.some(p => p.name === newPartner.name && p.address === newPartner.address)) {
+      setPartnerError("Já existe um parceiro com este nome e endereço.");
+      return;
+    }
+    setPartnerLoading(true);
+    // TODO: trocar por chamada à API futuramente
+    setTimeout(() => {
+      setPartners([
+        ...partners,
+        { ...newPartner, id: Date.now(), lat: parseFloat(newPartner.lat), lng: parseFloat(newPartner.lng) }
+      ]);
+      setNewPartner({ name: "", description: "", address: "", phone: "", hours: "", lat: "", lng: "", rating: 5.0 });
+      setPartnerLoading(false);
+      toast.success("Parceiro cadastrado com sucesso!");
+    }, 600);
   }
 
   function handleRemovePartner(id) {
+    // TODO: trocar por chamada à API futuramente
     setPartners(partners.filter(p => p.id !== id));
+    toast.success("Parceiro removido!");
   }
 
   function openBookingModal(partner) {
@@ -235,8 +253,10 @@ export function PartnerMap() {
           onChange={e => setNewPartner({ ...newPartner, lng: e.target.value })}
           className="w-full md:w-32"
         />
-        <Button type="submit" className="bg-gradient-to-r from-primary to-primary/80">Cadastrar</Button>
+        <Button type="submit" className="bg-gradient-to-r from-primary to-primary/80" disabled={partnerLoading || !newPartner.name || !newPartner.address || !newPartner.phone || !newPartner.hours || !newPartner.lat || !newPartner.lng}>Cadastrar</Button>
       </form>
+      {partnerError && <div className="text-red-600 text-sm mt-2">{partnerError}</div>}
+      {partnerLoading && <div className="text-primary text-sm mt-2">Cadastrando parceiro...</div>}
 
       <div className="w-full grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {filteredPartners.map((partner) => (

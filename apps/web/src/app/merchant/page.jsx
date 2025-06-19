@@ -12,6 +12,8 @@ import {
   Input,
 } from "@nathanpass/ui";
 import { Building, Users, CreditCard, Settings, BarChart2, UserPlus, FileText, TrendingUp, TrendingDown, AlertTriangle, User, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import SupportChatbot from "@/components/SupportChatbot";
 
 export default function MerchantPage() {
   const { user } = useAuth();
@@ -103,19 +105,52 @@ export default function MerchantPage() {
     { id: 2, name: "Maria Souza", email: "maria@email.com", phone: "(11) 98888-2222" },
   ]);
   const [newClient, setNewClient] = useState({ name: "", email: "", phone: "" });
+  const [clientError, setClientError] = useState("");
+  const [clientLoading, setClientLoading] = useState(false);
 
-  function handleAddClient(e) {
+  function validateEmail(email) {
+    return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+  }
+  function validatePhone(phone) {
+    return /^\(?\d{2}\)? ?9?\d{4}-?\d{4}$/.test(phone);
+  }
+
+  async function handleAddClient(e) {
     e.preventDefault();
-    if (!newClient.name || !newClient.email || !newClient.phone) return;
-    setClients([
-      ...clients,
-      { ...newClient, id: Date.now() }
-    ]);
-    setNewClient({ name: "", email: "", phone: "" });
+    setClientError("");
+    if (!newClient.name || !newClient.email || !newClient.phone) {
+      setClientError("Preencha todos os campos.");
+      return;
+    }
+    if (!validateEmail(newClient.email)) {
+      setClientError("E-mail inválido.");
+      return;
+    }
+    if (!validatePhone(newClient.phone)) {
+      setClientError("Telefone inválido. Use o formato (11) 99999-9999");
+      return;
+    }
+    if (clients.some(c => c.email === newClient.email)) {
+      setClientError("Já existe um cliente com este e-mail.");
+      return;
+    }
+    setClientLoading(true);
+    // TODO: trocar por chamada à API futuramente
+    setTimeout(() => {
+      setClients([
+        ...clients,
+        { ...newClient, id: Date.now() }
+      ]);
+      setNewClient({ name: "", email: "", phone: "" });
+      setClientLoading(false);
+      toast.success("Cliente cadastrado com sucesso!");
+    }, 600);
   }
 
   function handleRemoveClient(id) {
+    // TODO: trocar por chamada à API futuramente
     setClients(clients.filter(c => c.id !== id));
+    toast.success("Cliente removido!");
   }
 
   const tabList = [
@@ -304,27 +339,35 @@ export default function MerchantPage() {
               </div>
               {/* Formulário de cadastro de cliente */}
               <form onSubmit={handleAddClient} className="flex flex-col md:flex-row gap-4 items-end bg-white/90 rounded-xl shadow p-6">
-                <Input
-                  placeholder="Nome"
-                  value={newClient.name}
-                  onChange={e => setNewClient({ ...newClient, name: e.target.value })}
-                  className="w-full md:w-60"
-                />
-                <Input
-                  type="email"
-                  placeholder="E-mail"
-                  value={newClient.email}
-                  onChange={e => setNewClient({ ...newClient, email: e.target.value })}
-                  className="w-full md:w-60"
-                />
-                <Input
-                  placeholder="Telefone"
-                  value={newClient.phone}
-                  onChange={e => setNewClient({ ...newClient, phone: e.target.value })}
-                  className="w-full md:w-44"
-                />
-                <Button type="submit" className="bg-gradient-to-r from-primary to-primary/80">Cadastrar</Button>
+                <div className="flex flex-col gap-1 w-full md:w-60">
+                  <label className="text-sm font-medium">Nome</label>
+                  <Input
+                    placeholder="Nome"
+                    value={newClient.name}
+                    onChange={e => setNewClient({ ...newClient, name: e.target.value })}
+                  />
+                </div>
+                <div className="flex flex-col gap-1 w-full md:w-60">
+                  <label className="text-sm font-medium">E-mail</label>
+                  <Input
+                    type="email"
+                    placeholder="E-mail"
+                    value={newClient.email}
+                    onChange={e => setNewClient({ ...newClient, email: e.target.value })}
+                  />
+                </div>
+                <div className="flex flex-col gap-1 w-full md:w-44">
+                  <label className="text-sm font-medium">Telefone</label>
+                  <Input
+                    placeholder="Telefone"
+                    value={newClient.phone}
+                    onChange={e => setNewClient({ ...newClient, phone: e.target.value })}
+                  />
+                </div>
+                <Button type="submit" className="bg-gradient-to-r from-primary to-primary/80" disabled={clientLoading || !newClient.name || !newClient.email || !newClient.phone}>Cadastrar</Button>
               </form>
+              {clientError && <div className="text-red-600 text-sm mt-2">{clientError}</div>}
+              {clientLoading && <div className="text-primary text-sm mt-2">Cadastrando cliente...</div>}
               {/* Lista de clientes */}
               <div className="overflow-x-auto rounded-2xl shadow-lg bg-white/90">
                 <table className="min-w-full text-sm">
@@ -444,6 +487,7 @@ export default function MerchantPage() {
           )}
         </div>
       </div>
+      <SupportChatbot />
     </div>
   );
 } 

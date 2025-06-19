@@ -21,6 +21,7 @@ import {
 import { Plus, Users, Receipt, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import SupportChatbot from "@/components/SupportChatbot";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -93,6 +94,7 @@ export default function DashboardPage() {
           </TabsContent>
         </Tabs>
       </div>
+      <SupportChatbot />
     </div>
   );
 } 

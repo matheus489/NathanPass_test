@@ -1,0 +1,83 @@
+[
+    {
+      "question": "Como faço um lançamento financeiro?",
+      "answer": "Acesse a aba Financeiro, preencha o formulário de lançamento e clique em 'Lançar'. Você pode registrar entradas e saídas facilmente." 
+    },
+    {
+      "question": "Como vejo o saldo do meu caixa?",
+      "answer": "O saldo do caixa é exibido no topo da aba Financeiro, atualizado automaticamente conforme seus lançamentos." 
+    },
+    {
+      "question": "Como cadastro um novo cliente?",
+      "answer": "Vá até a aba Clientes, preencha os dados do cliente e clique em 'Cadastrar'. O cliente será adicionado à sua lista." 
+    },
+    {
+      "question": "Posso remover um cliente?",
+      "answer": "Sim, na aba Clientes, clique no ícone de lixeira ao lado do cliente que deseja remover." 
+    },
+    {
+      "question": "Como cadastrar um parceiro de bem-estar?",
+      "answer": "Na aba Parceiros do portal do colaborador, preencha o formulário de cadastro de parceiro e clique em 'Cadastrar'." 
+    },
+    {
+      "question": "Como agendar uma consulta com um parceiro?",
+      "answer": "Clique em 'Agendar' no card do parceiro desejado, preencha os dados e confirme o agendamento. Ele aparecerá em 'Minhas Consultas'." 
+    },
+    {
+      "question": "Como cancelo um agendamento?",
+      "answer": "Na aba Minhas Consultas, clique em 'Cancelar Agendamento' no card da consulta que deseja cancelar." 
+    },
+    {
+      "question": "Como funciona o filtro de parceiros por distância?",
+      "answer": "Use o campo de raio (km) para filtrar parceiros próximos de você. O sistema usa sua localização real para calcular a distância." 
+    },
+    {
+      "question": "Como acessar a biblioteca de conteúdo de bem-estar?",
+      "answer": "No portal do colaborador, clique na aba Biblioteca de Conteúdo para acessar artigos, vídeos e podcasts sobre saúde e bem-estar." 
+    },
+    {
+      "question": "O sistema funciona no celular?",
+      "answer": "Sim, a plataforma é responsiva e pode ser acessada pelo navegador do seu celular." 
+    },
+    {
+      "question": "Como exportar minhas transações?",
+      "answer": "Na aba Transações, clique no botão 'Exportar' para baixar um relatório das suas transações." 
+    },
+    {
+      "question": "Como faço login na plataforma?",
+      "answer": "Clique em 'Login' na página inicial e insira seu e-mail e senha cadastrados." 
+    },
+    {
+      "question": "Esqueci minha senha, o que faço?",
+      "answer": "Na tela de login, clique em 'Esqueci minha senha' e siga as instruções para redefinir." 
+    },
+    {
+      "question": "Como altero meus dados de empresa?",
+      "answer": "Na aba Configurações do painel do comerciante, edite os campos desejados e clique em 'Salvar Alterações'." 
+    },
+    {
+      "question": "Como vejo meus funcionários?",
+      "answer": "Acesse a aba Funcionários para visualizar, adicionar ou gerenciar sua equipe." 
+    },
+    {
+      "question": "O que é o portal do colaborador?",
+      "answer": "É um ambiente dedicado aos funcionários, com acesso a parceiros de bem-estar, agendamento de consultas e biblioteca de conteúdo." 
+    },
+    {
+      "question": "Como funciona o suporte IA?",
+      "answer": "Clique no botão de chat no canto da tela para tirar dúvidas sobre o uso da plataforma. O assistente responde automaticamente com base nas perguntas mais frequentes." 
+    },
+    {
+      "question": "Posso cadastrar mais de um parceiro?",
+      "answer": "Sim, basta preencher o formulário de cadastro de parceiro quantas vezes quiser." 
+    },
+    {
+      "question": "Como vejo parceiros próximos de mim?",
+      "answer": "Permita o acesso à sua localização e ajuste o raio de busca para ver parceiros próximos no mapa." 
+    },
+    {
+      "question": "Como faço para sair da plataforma?",
+      "answer": "Clique no menu do usuário no topo da tela e selecione 'Sair'." 
+    }
+  ]
+  
