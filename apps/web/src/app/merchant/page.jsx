@@ -11,7 +11,7 @@ import {
   CardTitle,
   Input,
 } from "@nathanpass/ui";
-import { Building, Users, CreditCard, Settings, BarChart2, UserPlus, FileText } from "lucide-react";
+import { Building, Users, CreditCard, Settings, BarChart2, UserPlus, FileText, TrendingUp, TrendingDown, AlertTriangle, User, Trash2 } from "lucide-react";
 
 export default function MerchantPage() {
   const { user } = useAuth();
@@ -75,10 +75,55 @@ export default function MerchantPage() {
     { id: 4, date: "2024-06-15", value: 90, type: "Venda", status: "Pendente" },
   ];
 
+  // Mock lançamentos financeiros
+  const [financeEntries, setFinanceEntries] = useState([
+    { id: 1, type: "entrada", description: "Venda balcão", value: 500, date: "2024-06-18" },
+    { id: 2, type: "saida", description: "Compra de insumos", value: 200, date: "2024-06-17" },
+    { id: 3, type: "entrada", description: "Pix recebido", value: 300, date: "2024-06-16" },
+  ]);
+  const [newEntry, setNewEntry] = useState({ type: "entrada", description: "", value: "", date: "" });
+
+  // Calcular saldo
+  const saldo = financeEntries.reduce((acc, entry) => entry.type === "entrada" ? acc + Number(entry.value) : acc - Number(entry.value), 0);
+
+  // Adicionar lançamento
+  function handleAddEntry(e) {
+    e.preventDefault();
+    if (!newEntry.description || !newEntry.value || !newEntry.date) return;
+    setFinanceEntries([
+      ...financeEntries,
+      { ...newEntry, id: Date.now(), value: Number(newEntry.value) }
+    ]);
+    setNewEntry({ type: "entrada", description: "", value: "", date: "" });
+  }
+
+  // Mock clientes
+  const [clients, setClients] = useState([
+    { id: 1, name: "João Silva", email: "joao@email.com", phone: "(11) 99999-1111" },
+    { id: 2, name: "Maria Souza", email: "maria@email.com", phone: "(11) 98888-2222" },
+  ]);
+  const [newClient, setNewClient] = useState({ name: "", email: "", phone: "" });
+
+  function handleAddClient(e) {
+    e.preventDefault();
+    if (!newClient.name || !newClient.email || !newClient.phone) return;
+    setClients([
+      ...clients,
+      { ...newClient, id: Date.now() }
+    ]);
+    setNewClient({ name: "", email: "", phone: "" });
+  }
+
+  function handleRemoveClient(id) {
+    setClients(clients.filter(c => c.id !== id));
+  }
+
   const tabList = [
     { key: "overview", label: "Visão Geral", icon: <Building className="w-5 h-5" /> },
+    { key: "finance", label: "Financeiro", icon: <CreditCard className="w-5 h-5" /> },
+    { key: "clients", label: "Clientes", icon: <User className="w-5 h-5" /> },
     { key: "employees", label: "Funcionários", icon: <Users className="w-5 h-5" /> },
-    { key: "transactions", label: "Transações", icon: <CreditCard className="w-5 h-5" /> },
+    { key: "transactions", label: "Transações", icon: <FileText className="w-5 h-5" /> },
     { key: "settings", label: "Configurações", icon: <Settings className="w-5 h-5" /> },
   ];
 
@@ -166,6 +211,147 @@ export default function MerchantPage() {
                   </ul>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {activeTab === "finance" && (
+            <div className="space-y-10">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold mb-1">Gestão Financeira</h2>
+                  <p className="text-muted-foreground">Controle de lançamentos e fluxo de caixa</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className={`text-2xl font-bold ${saldo < 0 ? "text-red-600" : "text-green-600"}`}>Saldo: R$ {saldo.toFixed(2)}</span>
+                  {saldo < 0 && (
+                    <span className="flex items-center gap-1 text-red-600 font-semibold"><AlertTriangle className="w-5 h-5" /> Saldo Negativo</span>
+                  )}
+                </div>
+              </div>
+              {/* Formulário de lançamento */}
+              <form onSubmit={handleAddEntry} className="flex flex-col md:flex-row gap-4 items-end bg-white/90 rounded-xl shadow p-6">
+                <select
+                  value={newEntry.type}
+                  onChange={e => setNewEntry({ ...newEntry, type: e.target.value })}
+                  className="border rounded-lg px-3 py-2"
+                >
+                  <option value="entrada">Entrada</option>
+                  <option value="saida">Saída</option>
+                </select>
+                <Input
+                  placeholder="Descrição"
+                  value={newEntry.description}
+                  onChange={e => setNewEntry({ ...newEntry, description: e.target.value })}
+                  className="w-full md:w-60"
+                />
+                <Input
+                  type="number"
+                  placeholder="Valor"
+                  value={newEntry.value}
+                  onChange={e => setNewEntry({ ...newEntry, value: e.target.value })}
+                  className="w-full md:w-32"
+                  min="0"
+                  step="0.01"
+                />
+                <Input
+                  type="date"
+                  value={newEntry.date}
+                  onChange={e => setNewEntry({ ...newEntry, date: e.target.value })}
+                  className="w-full md:w-44"
+                />
+                <Button type="submit" className="bg-gradient-to-r from-primary to-primary/80">Lançar</Button>
+              </form>
+              {/* Lista de lançamentos */}
+              <div className="overflow-x-auto rounded-2xl shadow-lg bg-white/90">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="bg-primary/10">
+                      <th className="px-6 py-3 text-left font-semibold">Data</th>
+                      <th className="px-6 py-3 text-left font-semibold">Tipo</th>
+                      <th className="px-6 py-3 text-left font-semibold">Descrição</th>
+                      <th className="px-6 py-3 text-left font-semibold">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {financeEntries.map(entry => (
+                      <tr key={entry.id}>
+                        <td className="px-6 py-4">{entry.date}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1
+                            ${entry.type === "entrada" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}
+                          `}>
+                            {entry.type === "entrada" ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                            {entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">{entry.description}</td>
+                        <td className={`px-6 py-4 font-semibold ${entry.type === "entrada" ? "text-green-600" : "text-red-600"}`}>R$ {Number(entry.value).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "clients" && (
+            <div className="space-y-10">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold mb-1">Clientes</h2>
+                  <p className="text-muted-foreground">Cadastre e gerencie seus clientes</p>
+                </div>
+              </div>
+              {/* Formulário de cadastro de cliente */}
+              <form onSubmit={handleAddClient} className="flex flex-col md:flex-row gap-4 items-end bg-white/90 rounded-xl shadow p-6">
+                <Input
+                  placeholder="Nome"
+                  value={newClient.name}
+                  onChange={e => setNewClient({ ...newClient, name: e.target.value })}
+                  className="w-full md:w-60"
+                />
+                <Input
+                  type="email"
+                  placeholder="E-mail"
+                  value={newClient.email}
+                  onChange={e => setNewClient({ ...newClient, email: e.target.value })}
+                  className="w-full md:w-60"
+                />
+                <Input
+                  placeholder="Telefone"
+                  value={newClient.phone}
+                  onChange={e => setNewClient({ ...newClient, phone: e.target.value })}
+                  className="w-full md:w-44"
+                />
+                <Button type="submit" className="bg-gradient-to-r from-primary to-primary/80">Cadastrar</Button>
+              </form>
+              {/* Lista de clientes */}
+              <div className="overflow-x-auto rounded-2xl shadow-lg bg-white/90">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="bg-primary/10">
+                      <th className="px-6 py-3 text-left font-semibold">Nome</th>
+                      <th className="px-6 py-3 text-left font-semibold">E-mail</th>
+                      <th className="px-6 py-3 text-left font-semibold">Telefone</th>
+                      <th className="px-6 py-3 text-left font-semibold">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clients.map(client => (
+                      <tr key={client.id}>
+                        <td className="px-6 py-4">{client.name}</td>
+                        <td className="px-6 py-4">{client.email}</td>
+                        <td className="px-6 py-4">{client.phone}</td>
+                        <td className="px-6 py-4">
+                          <Button variant="destructive" size="icon" onClick={() => handleRemoveClient(client.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 

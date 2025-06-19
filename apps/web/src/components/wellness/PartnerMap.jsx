@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -12,20 +12,45 @@ import {
   Button,
 } from '@nathanpass/ui';
 import { MapPin, Search, Star, Clock, Phone, ExternalLink, Map } from 'lucide-react';
+import haversine from "haversine-distance";
+import { toast } from 'sonner';
 
 export function PartnerMap() {
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchRadius, setSearchRadius] = useState("5");
   const [userLocation, setUserLocation] = useState(null);
+  // Novo estado para cadastro de parceiro
+  const [newPartner, setNewPartner] = useState({
+    name: "",
+    description: "",
+    address: "",
+    phone: "",
+    hours: "",
+    lat: "",
+    lng: "",
+    rating: 5.0,
+  });
+  // Estado para modal de agendamento
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingPartner, setBookingPartner] = useState(null);
+  const [bookingData, setBookingData] = useState({ service: '', date: '', time: '' });
 
-  useState(() => {
-    // Simular localização do usuário
-    setUserLocation({
-      lat: -23.5505,
-      lng: -46.6333,
-    });
-
+  useEffect(() => {
+    // Tentar pegar localização real do usuário
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {
+          // Fallback: centro de SP
+          setUserLocation({ lat: -23.5505, lng: -46.6333 });
+        }
+      );
+    } else {
+      setUserLocation({ lat: -23.5505, lng: -46.6333 });
+    }
     // Simular carregamento de parceiros
     setTimeout(() => {
       setPartners([
@@ -33,7 +58,8 @@ export function PartnerMap() {
           id: 1,
           name: "Clínica Saúde Total",
           description: "Clínica especializada em medicina preventiva e bem-estar",
-          distance: 2.5,
+          lat: -23.5614,
+          lng: -46.6556,
           rating: 4.8,
           address: "Av. Paulista, 1000",
           phone: "(11) 9999-9999",
@@ -43,7 +69,8 @@ export function PartnerMap() {
           id: 2,
           name: "Studio Yoga & Pilates",
           description: "Aulas de yoga, pilates e meditação para todos os níveis",
-          distance: 3.2,
+          lat: -23.5558,
+          lng: -46.6402,
           rating: 4.9,
           address: "Rua Augusta, 500",
           phone: "(11) 8888-8888",
@@ -53,7 +80,8 @@ export function PartnerMap() {
           id: 3,
           name: "NutriVida",
           description: "Consultoria nutricional personalizada",
-          distance: 4.1,
+          lat: -23.5587,
+          lng: -46.6619,
           rating: 4.7,
           address: "Rua Consolação, 2000",
           phone: "(11) 7777-7777",
@@ -64,8 +92,19 @@ export function PartnerMap() {
     }, 1000);
   }, []);
 
-  const filteredPartners = partners.filter(
-    (partner) => partner.distance <= parseFloat(searchRadius)
+  // Calcular distância real
+  const partnersWithDistance = partners.map((partner) => {
+    if (!userLocation) return { ...partner, distance: null };
+    const dist = haversine(
+      { lat: userLocation.lat, lng: userLocation.lng },
+      { lat: partner.lat, lng: partner.lng }
+    );
+    return { ...partner, distance: dist / 1000 };
+  });
+
+  const filteredPartners = partnersWithDistance.filter(
+    (partner) =>
+      partner.distance !== null && partner.distance <= parseFloat(searchRadius)
   );
 
   // Função para abrir todos os parceiros no Google Maps
@@ -75,6 +114,46 @@ export function PartnerMap() {
     const addresses = filteredPartners.map(p => encodeURIComponent(p.address)).join('|');
     // Abre o Google Maps com busca por múltiplos endereços
     window.open(`https://www.google.com/maps/dir/${addresses}`, '_blank');
+  }
+
+  function handleAddPartner(e) {
+    e.preventDefault();
+    if (!newPartner.name || !newPartner.address || !newPartner.phone || !newPartner.hours || !newPartner.lat || !newPartner.lng) return;
+    setPartners([
+      ...partners,
+      { ...newPartner, id: Date.now(), lat: parseFloat(newPartner.lat), lng: parseFloat(newPartner.lng) }
+    ]);
+    setNewPartner({ name: "", description: "", address: "", phone: "", hours: "", lat: "", lng: "", rating: 5.0 });
+  }
+
+  function handleRemovePartner(id) {
+    setPartners(partners.filter(p => p.id !== id));
+  }
+
+  function openBookingModal(partner) {
+    setBookingPartner(partner);
+    setBookingData({ service: '', date: '', time: '' });
+    setShowBookingModal(true);
+  }
+
+  function handleBook(e) {
+    e.preventDefault();
+    if (!bookingData.service || !bookingData.date || !bookingData.time) return;
+    // Salvar no localStorage (MVP)
+    const bookings = JSON.parse(localStorage.getItem('wellness_bookings') || '[]');
+    bookings.push({
+      id: Date.now(),
+      service: bookingData.service,
+      partner: bookingPartner.name,
+      date: bookingData.date,
+      time: bookingData.time,
+      status: 'pending',
+    });
+    localStorage.setItem('wellness_bookings', JSON.stringify(bookings));
+    setShowBookingModal(false);
+    toast.success('Agendamento realizado!');
+    // Disparar evento para BookingList atualizar
+    window.dispatchEvent(new Event('wellness_bookings_update'));
   }
 
   if (loading) {
@@ -107,6 +186,57 @@ export function PartnerMap() {
           <Map className="w-4 h-4" /> Ver parceiros no mapa
         </Button>
       </div>
+
+      {/* Formulário de cadastro de parceiro */}
+      <form onSubmit={handleAddPartner} className="flex flex-col md:flex-row gap-4 items-end bg-white/90 rounded-xl shadow p-6 mb-4">
+        <Input
+          placeholder="Nome"
+          value={newPartner.name}
+          onChange={e => setNewPartner({ ...newPartner, name: e.target.value })}
+          className="w-full md:w-44"
+        />
+        <Input
+          placeholder="Descrição"
+          value={newPartner.description}
+          onChange={e => setNewPartner({ ...newPartner, description: e.target.value })}
+          className="w-full md:w-44"
+        />
+        <Input
+          placeholder="Endereço"
+          value={newPartner.address}
+          onChange={e => setNewPartner({ ...newPartner, address: e.target.value })}
+          className="w-full md:w-44"
+        />
+        <Input
+          placeholder="Telefone"
+          value={newPartner.phone}
+          onChange={e => setNewPartner({ ...newPartner, phone: e.target.value })}
+          className="w-full md:w-36"
+        />
+        <Input
+          placeholder="Horário"
+          value={newPartner.hours}
+          onChange={e => setNewPartner({ ...newPartner, hours: e.target.value })}
+          className="w-full md:w-36"
+        />
+        <Input
+          type="number"
+          step="any"
+          placeholder="Latitude"
+          value={newPartner.lat}
+          onChange={e => setNewPartner({ ...newPartner, lat: e.target.value })}
+          className="w-full md:w-32"
+        />
+        <Input
+          type="number"
+          step="any"
+          placeholder="Longitude"
+          value={newPartner.lng}
+          onChange={e => setNewPartner({ ...newPartner, lng: e.target.value })}
+          className="w-full md:w-32"
+        />
+        <Button type="submit" className="bg-gradient-to-r from-primary to-primary/80">Cadastrar</Button>
+      </form>
 
       <div className="w-full grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {filteredPartners.map((partner) => (
@@ -142,7 +272,7 @@ export function PartnerMap() {
               </div>
               <div className="flex items-center gap-2 text-sm font-medium text-primary">
                 <MapPin className="w-4 h-4" />
-                {partner.distance} km de distância
+                {partner.distance ? partner.distance.toFixed(2) : "-"} km de distância
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-2">
@@ -154,8 +284,11 @@ export function PartnerMap() {
                 Ver no Google Maps
                 <ExternalLink className="w-4 h-4 ml-2" />
               </Button>
-              <Button className="w-full" variant="outline">
-                Ver detalhes
+              <Button className="w-full" variant="outline" onClick={() => handleRemovePartner(partner.id)}>
+                Remover parceiro
+              </Button>
+              <Button className="w-full" variant="secondary" onClick={() => openBookingModal(partner)}>
+                Agendar
               </Button>
             </CardFooter>
           </Card>
@@ -169,6 +302,40 @@ export function PartnerMap() {
           <p className="text-muted-foreground mt-1">
             Tente aumentar o raio de busca para encontrar mais parceiros
           </p>
+        </div>
+      )}
+
+      {/* Modal de agendamento */}
+      {showBookingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative">
+            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600" onClick={() => setShowBookingModal(false)}>&times;</button>
+            <h3 className="text-xl font-bold mb-4">Agendar com {bookingPartner?.name}</h3>
+            <form onSubmit={handleBook} className="flex flex-col gap-4">
+              <input
+                className="border rounded-lg px-3 py-2"
+                placeholder="Serviço"
+                value={bookingData.service}
+                onChange={e => setBookingData({ ...bookingData, service: e.target.value })}
+                required
+              />
+              <input
+                className="border rounded-lg px-3 py-2"
+                type="date"
+                value={bookingData.date}
+                onChange={e => setBookingData({ ...bookingData, date: e.target.value })}
+                required
+              />
+              <input
+                className="border rounded-lg px-3 py-2"
+                type="time"
+                value={bookingData.time}
+                onChange={e => setBookingData({ ...bookingData, time: e.target.value })}
+                required
+              />
+              <Button type="submit" className="bg-gradient-to-r from-primary to-primary/80">Confirmar Agendamento</Button>
+            </form>
+          </div>
         </div>
       )}
     </div>

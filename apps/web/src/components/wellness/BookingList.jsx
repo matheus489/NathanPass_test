@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -17,44 +17,24 @@ export function BookingList({ userId }) {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Simular carregamento de dados
-  useState(() => {
-    const mockBookings = [
-      {
-        id: 1,
-        service: 'Consulta Nutricional',
-        partner: 'NutriVida',
-        date: '2024-03-20',
-        time: '14:00',
-        status: 'pending',
-      },
-      {
-        id: 2,
-        service: 'Aula de Yoga',
-        partner: 'Studio Yoga & Pilates',
-        date: '2024-03-22',
-        time: '10:00',
-        status: 'confirmed',
-      },
-      {
-        id: 3,
-        service: 'Massagem Relaxante',
-        partner: 'Spa Relax',
-        date: '2024-03-25',
-        time: '16:00',
-        status: 'completed',
-      },
-    ];
-
-    setTimeout(() => {
-      setBookings(mockBookings);
+  // Carregar agendamentos do localStorage
+  useEffect(() => {
+    function loadBookings() {
+      const stored = JSON.parse(localStorage.getItem('wellness_bookings') || '[]');
+      setBookings(stored);
       setLoading(false);
-    }, 1000);
+    }
+    loadBookings();
+    window.addEventListener('wellness_bookings_update', loadBookings);
+    return () => window.removeEventListener('wellness_bookings_update', loadBookings);
   }, []);
 
   const handleCancelBooking = (bookingId) => {
-    setBookings(bookings.filter((booking) => booking.id !== bookingId));
+    const updated = bookings.filter((booking) => booking.id !== bookingId);
+    setBookings(updated);
+    localStorage.setItem('wellness_bookings', JSON.stringify(updated));
     toast.success('Agendamento cancelado com sucesso!');
+    window.dispatchEvent(new Event('wellness_bookings_update'));
   };
 
   const getStatusInfo = (status) => {
