@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   Dialog,
@@ -22,43 +22,28 @@ import {
 } from "@nathanpass/ui";
 import { Plus, Pencil, Trash2, Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
+import { api } from "@/services/api";
 
 export function ClientList() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [error, setError] = useState("");
 
-  // Simular carregamento de dados
-  useState(() => {
-    const mockClients = [
-      {
-        id: 1,
-        name: "João Silva",
-        email: "joao.silva@email.com",
-        phone: "(11) 99999-9999",
-        notes: "Cliente desde 2023",
-      },
-      {
-        id: 2,
-        name: "Maria Santos",
-        email: "maria.santos@email.com",
-        phone: "(11) 98888-8888",
-        notes: "Cliente VIP",
-      },
-      {
-        id: 3,
-        name: "Pedro Oliveira",
-        email: "pedro.oliveira@email.com",
-        phone: "(11) 97777-7777",
-        notes: "Cliente novo",
-      },
-    ];
-
-    setTimeout(() => {
-      setClients(mockClients);
-      setLoading(false);
-    }, 1000);
+  useEffect(() => {
+    async function fetchClients() {
+      setLoading(true);
+      try {
+        const data = await api.get("/crm/clients");
+        setClients(data);
+      } catch (err) {
+        setError("Erro ao carregar clientes");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchClients();
   }, []);
 
   const handleEdit = (client) => {
@@ -68,46 +53,44 @@ export function ClientList() {
 
   const handleDelete = async (clientId) => {
     try {
-      // TODO: Implementar exclusão real
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setClients((prevClients) =>
-        prevClients.filter((client) => client.id !== clientId)
-      );
+      await api.delete(`/crm/clients/${clientId}`);
+      setClients((prev) => prev.filter((c) => c.id !== clientId));
       toast.success("Cliente excluído com sucesso!");
-    } catch (error) {
-      console.error("Erro ao excluir cliente:", error);
+    } catch (err) {
       toast.error("Erro ao excluir cliente");
     }
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
+    const form = e.target;
+    const clientData = {
+      name: form.name.value,
+      email: form.email.value,
+      phone: form.phone.value,
+      notes: form.notes.value,
+    };
     try {
-      // TODO: Implementar salvamento real
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       if (selectedClient) {
-        setClients((prevClients) =>
-          prevClients.map((client) =>
-            client.id === selectedClient.id ? selectedClient : client
-          )
-        );
+        const updated = await api.put(`/crm/clients/${selectedClient.id}`, clientData);
+        setClients((prev) => prev.map((c) => c.id === updated.id ? updated : c));
         toast.success("Cliente atualizado com sucesso!");
       } else {
-        const newClient = {
-          id: clients.length + 1,
-          name: e.target.name.value,
-          email: e.target.email.value,
-          phone: e.target.phone.value,
-          notes: e.target.notes.value,
-        };
-        setClients((prevClients) => [...prevClients, newClient]);
+        const created = await api.post("/crm/clients", clientData);
+        setClients((prev) => [...prev, created]);
         toast.success("Cliente adicionado com sucesso!");
       }
       setIsDialogOpen(false);
       setSelectedClient(null);
-    } catch (error) {
-      console.error("Erro ao salvar cliente:", error);
-      toast.error("Erro ao salvar cliente");
+    } catch (err) {
+      if (err.errors && err.errors.length > 0) {
+        const primeiroErro = err.errors[0];
+        const campo = primeiroErro.path ? primeiroErro.path.join('.') : 'Campo';
+        const minimo = primeiroErro.minimum;
+        toast.error(`${campo} deve ter pelo menos ${minimo} caracteres`);
+      } else {
+        toast.error(err.message || "Erro ao salvar cliente");
+      }
     }
   };
 

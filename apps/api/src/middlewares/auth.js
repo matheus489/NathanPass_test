@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { prisma } = require('@nathanpass/database');
+const { pool } = require('../config');
 const { AppError } = require('./error-handler');
 
 // Interface para o payload do JWT
@@ -29,9 +29,8 @@ const authMiddleware = async (req, res, next) => {
       process.env.JWT_SECRET || 'default-secret'
     );
 
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-    });
+    const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [decoded.userId]);
+    const user = rows[0];
 
     if (!user) {
       throw new AppError(401, 'User not found');
@@ -52,6 +51,4 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-module.exports = {
-  authMiddleware,
-}; 
+module.exports = authMiddleware; 

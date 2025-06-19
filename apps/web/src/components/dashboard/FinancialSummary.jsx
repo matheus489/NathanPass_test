@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -8,15 +8,37 @@ import {
   CardTitle,
 } from "@nathanpass/ui";
 import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { api } from "@/services/api";
 
 export function FinancialSummary() {
-  const [summary, setSummary] = useState({
-    totalRevenue: 12500,
-    totalExpenses: 8500,
-    netIncome: 4000,
-    revenueChange: 12.5,
-    expensesChange: -5.2,
-  });
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function fetchSummary() {
+      setLoading(true);
+      try {
+        // Supondo que companyId está disponível via contexto ou props
+        const companyId = 1;
+        const data = await api.get(`/financial/summary/${companyId}`);
+        setSummary(data);
+      } catch (err) {
+        setError("Erro ao carregar resumo financeiro");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSummary();
+  }, []);
+
+  if (loading || !summary) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

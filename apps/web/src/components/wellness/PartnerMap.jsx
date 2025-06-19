@@ -14,6 +14,7 @@ import {
 import { MapPin, Search, Star, Clock, Phone, ExternalLink, Map } from 'lucide-react';
 import haversine from "haversine-distance";
 import { toast } from 'sonner';
+import { api } from '@/services/api';
 
 export function PartnerMap() {
   const [partners, setPartners] = useState([]);
@@ -39,60 +40,34 @@ export function PartnerMap() {
   const [partnerLoading, setPartnerLoading] = useState(false);
 
   useEffect(() => {
-    // Tentar pegar localização real do usuário
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        },
-        () => {
-          // Fallback: centro de SP
-          setUserLocation({ lat: -23.5505, lng: -46.6333 });
-        }
-      );
-    } else {
-      setUserLocation({ lat: -23.5505, lng: -46.6333 });
+    async function fetchPartners() {
+      setLoading(true);
+      try {
+        const data = await api.get('/partner');
+        setPartners(data);
+      } catch (err) {
+        setPartnerError('Erro ao carregar parceiros');
+      } finally {
+        setLoading(false);
+      }
     }
-    // Simular carregamento de parceiros
-    setTimeout(() => {
-      setPartners([
-        {
-          id: 1,
-          name: "Clínica Saúde Total",
-          description: "Clínica especializada em medicina preventiva e bem-estar",
-          lat: -23.5614,
-          lng: -46.6556,
-          rating: 4.8,
-          address: "Av. Paulista, 1000",
-          phone: "(11) 9999-9999",
-          hours: "Seg-Sex: 8h-20h",
-        },
-        {
-          id: 2,
-          name: "Studio Yoga & Pilates",
-          description: "Aulas de yoga, pilates e meditação para todos os níveis",
-          lat: -23.5558,
-          lng: -46.6402,
-          rating: 4.9,
-          address: "Rua Augusta, 500",
-          phone: "(11) 8888-8888",
-          hours: "Seg-Sáb: 7h-21h",
-        },
-        {
-          id: 3,
-          name: "NutriVida",
-          description: "Consultoria nutricional personalizada",
-          lat: -23.5587,
-          lng: -46.6619,
-          rating: 4.7,
-          address: "Rua Consolação, 2000",
-          phone: "(11) 7777-7777",
-          hours: "Seg-Sex: 9h-19h",
-        },
-      ]);
-      setLoading(false);
-    }, 1000);
+    fetchPartners();
   }, []);
+
+  // Tentar pegar localização real do usuário
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      () => {
+        // Fallback: centro de SP
+        setUserLocation({ lat: -23.5505, lng: -46.6333 });
+      }
+    );
+  } else {
+    setUserLocation({ lat: -23.5505, lng: -46.6333 });
+  }
 
   // Calcular distância real
   const partnersWithDistance = partners.map((partner) => {
@@ -118,34 +93,30 @@ export function PartnerMap() {
     window.open(`https://www.google.com/maps/dir/${addresses}`, '_blank');
   }
 
-  function handleAddPartner(e) {
+  async function handleAddPartner(e) {
     e.preventDefault();
     setPartnerError("");
-    if (!newPartner.name || !newPartner.address || !newPartner.phone || !newPartner.hours || !newPartner.lat || !newPartner.lng) {
-      setPartnerError("Preencha todos os campos.");
-      return;
-    }
-    if (partners.some(p => p.name === newPartner.name && p.address === newPartner.address)) {
-      setPartnerError("Já existe um parceiro com este nome e endereço.");
-      return;
-    }
     setPartnerLoading(true);
-    // TODO: trocar por chamada à API futuramente
-    setTimeout(() => {
-      setPartners([
-        ...partners,
-        { ...newPartner, id: Date.now(), lat: parseFloat(newPartner.lat), lng: parseFloat(newPartner.lng) }
-      ]);
+    try {
+      const created = await api.post('/partner', newPartner);
+      setPartners((prev) => [...prev, created]);
       setNewPartner({ name: "", description: "", address: "", phone: "", hours: "", lat: "", lng: "", rating: 5.0 });
-      setPartnerLoading(false);
       toast.success("Parceiro cadastrado com sucesso!");
-    }, 600);
+    } catch (err) {
+      setPartnerError("Erro ao cadastrar parceiro");
+    } finally {
+      setPartnerLoading(false);
+    }
   }
 
-  function handleRemovePartner(id) {
-    // TODO: trocar por chamada à API futuramente
-    setPartners(partners.filter(p => p.id !== id));
-    toast.success("Parceiro removido!");
+  async function handleRemovePartner(id) {
+    try {
+      await api.delete(`/partner/${id}`);
+      setPartners((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Parceiro removido!");
+    } catch (err) {
+      toast.error("Erro ao remover parceiro");
+    }
   }
 
   function openBookingModal(partner) {
@@ -154,24 +125,18 @@ export function PartnerMap() {
     setShowBookingModal(true);
   }
 
-  function handleBook(e) {
+  async function handleBook(e) {
     e.preventDefault();
-    if (!bookingData.service || !bookingData.date || !bookingData.time) return;
-    // Salvar no localStorage (MVP)
-    const bookings = JSON.parse(localStorage.getItem('wellness_bookings') || '[]');
-    bookings.push({
-      id: Date.now(),
-      service: bookingData.service,
-      partner: bookingPartner.name,
-      date: bookingData.date,
-      time: bookingData.time,
-      status: 'pending',
-    });
-    localStorage.setItem('wellness_bookings', JSON.stringify(bookings));
-    setShowBookingModal(false);
-    toast.success('Agendamento realizado!');
-    // Disparar evento para BookingList atualizar
-    window.dispatchEvent(new Event('wellness_bookings_update'));
+    try {
+      await api.post('/employee/bookings', {
+        ...bookingData,
+        partnerId: bookingPartner.id,
+      });
+      setShowBookingModal(false);
+      toast.success('Agendamento realizado!');
+    } catch (err) {
+      toast.error('Erro ao agendar serviço');
+    }
   }
 
   if (loading) {

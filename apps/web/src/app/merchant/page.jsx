@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import {
   Button,
@@ -14,6 +14,7 @@ import {
 import { Building, Users, CreditCard, Settings, BarChart2, UserPlus, FileText, TrendingUp, TrendingDown, AlertTriangle, User, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import SupportChatbot from "@/components/SupportChatbot";
+import { api } from "@/services/api";
 
 export default function MerchantPage() {
   const { user } = useAuth();
@@ -100,13 +101,26 @@ export default function MerchantPage() {
   }
 
   // Mock clientes
-  const [clients, setClients] = useState([
-    { id: 1, name: "João Silva", email: "joao@email.com", phone: "(11) 99999-1111" },
-    { id: 2, name: "Maria Souza", email: "maria@email.com", phone: "(11) 98888-2222" },
-  ]);
-  const [newClient, setNewClient] = useState({ name: "", email: "", phone: "" });
+  const [clients, setClients] = useState([]);
+  const [clientsLoading, setClientsLoading] = useState(true);
   const [clientError, setClientError] = useState("");
+  const [newClient, setNewClient] = useState({ name: "", email: "", phone: "" });
   const [clientLoading, setClientLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchClients() {
+      setClientsLoading(true);
+      try {
+        const data = await api.get("/crm/clients");
+        setClients(data);
+      } catch (err) {
+        setClientError("Erro ao carregar clientes");
+      } finally {
+        setClientsLoading(false);
+      }
+    }
+    fetchClients();
+  }, []);
 
   function validateEmail(email) {
     return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
@@ -135,22 +149,26 @@ export default function MerchantPage() {
       return;
     }
     setClientLoading(true);
-    // TODO: trocar por chamada à API futuramente
-    setTimeout(() => {
-      setClients([
-        ...clients,
-        { ...newClient, id: Date.now() }
-      ]);
+    try {
+      const created = await api.post("/crm/clients", newClient);
+      setClients((prev) => [...prev, created]);
       setNewClient({ name: "", email: "", phone: "" });
-      setClientLoading(false);
       toast.success("Cliente cadastrado com sucesso!");
-    }, 600);
+    } catch (err) {
+      setClientError("Erro ao cadastrar cliente");
+    } finally {
+      setClientLoading(false);
+    }
   }
 
-  function handleRemoveClient(id) {
-    // TODO: trocar por chamada à API futuramente
-    setClients(clients.filter(c => c.id !== id));
-    toast.success("Cliente removido!");
+  async function handleRemoveClient(id) {
+    try {
+      await api.delete(`/crm/clients/${id}`);
+      setClients((prev) => prev.filter((c) => c.id !== id));
+      toast.success("Cliente removido!");
+    } catch (err) {
+      toast.error("Erro ao remover cliente");
+    }
   }
 
   const tabList = [

@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { authMiddleware } = require("../middlewares/auth");
+const authMiddleware = require("../middlewares/auth");
 const {
   createCompany,
   updateCompany,

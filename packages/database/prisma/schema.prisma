@@ -24,6 +24,15 @@ model User {
   company   Company? @relation(fields: [companyId], references: [id])
   companyId String?
   bookings  Booking[]
+  merchantOf Company?
+  orders    Order[]
+  commissions Commission[] @relation("EmployeeCommissions")
+  absences   Absence[] @relation("EmployeeAbsences")
+  emotionDiaries EmotionDiary[]
+  gamifications Gamification[]
+  communityPosts CommunityPost[]
+  notifications Notification[]
+  wearableData WearableData[]
 }
 
 // Modelo de Empresa
@@ -39,10 +48,24 @@ model Company {
   updatedAt    DateTime @updatedAt
 
   // Relacionamentos
-  merchant     User           @relation(fields: [merchantId], references: [id])
-  merchantId   String
+  merchant     User?    @relation(fields: [merchantId], references: [id])
+  merchantId   String?  @unique
   employees    User[]
   subscriptions Subscription[]
+  products     Product[]
+  inventoryMovements InventoryMovement[]
+  accounts     Account[]
+  bankReconciliations BankReconciliation[]
+  financialReserves FinancialReserve[]
+  promotions   Promotion[]
+  loyaltyPrograms LoyaltyProgram[]
+  orders       Order[]
+  commissions  Commission[]
+  absences     Absence[]
+  businessInsights BusinessInsight[]
+  accountingExports AccountingExport[]
+  invoices     Invoice[]
+  boletos      Boleto[]
 }
 
 // Modelo de Assinatura
@@ -136,6 +159,232 @@ model WellnessData {
   // Relacionamentos
   user   User   @relation(fields: [userId], references: [id])
   userId String
+}
+
+// Modelo de Produto/Serviço
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  cost        Float
+  stock       Int
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+  inventoryMovements InventoryMovement[]
+}
+
+// Modelo de Estoque
+model InventoryMovement {
+  id          String   @id @default(uuid())
+  product     Product  @relation(fields: [productId], references: [id])
+  productId   String
+  type        String   // entrada, saida, ajuste
+  quantity    Int
+  date        DateTime @default(now())
+  description String?
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+}
+
+// Modelo de Conta a Pagar/Receber
+model Account {
+  id          String   @id @default(uuid())
+  type        String   // pagar, receber
+  description String
+  value       Float
+  dueDate     DateTime
+  paid        Boolean  @default(false)
+  paidDate    DateTime?
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+}
+
+// Modelo de Conciliação Bancária
+model BankReconciliation {
+  id          String   @id @default(uuid())
+  date        DateTime
+  description String?
+  amount      Float
+  reconciled  Boolean  @default(false)
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+}
+
+// Modelo de Reserva Financeira
+model FinancialReserve {
+  id          String   @id @default(uuid())
+  name        String
+  targetValue Float
+  currentValue Float
+  createdAt   DateTime @default(now())
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+}
+
+// Modelo de Promoção
+model Promotion {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  active      Boolean  @default(true)
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+}
+
+// Modelo de Fidelidade
+model LoyaltyProgram {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  pointsPerReal Float
+  active      Boolean  @default(true)
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+}
+
+// Modelo de Pedido
+model Order {
+  id          String   @id @default(uuid())
+  client      User     @relation(fields: [clientId], references: [id])
+  clientId    String
+  products    Json
+  total       Float
+  status      String
+  createdAt   DateTime @default(now())
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+}
+
+// Modelo de Comissão
+model Commission {
+  id          String   @id @default(uuid())
+  employee    User     @relation("EmployeeCommissions", fields: [employeeId], references: [id])
+  employeeId  String
+  value       Float
+  reference   String
+  date        DateTime @default(now())
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+}
+
+// Modelo de Falta/Afastamento
+model Absence {
+  id          String   @id @default(uuid())
+  employee    User     @relation("EmployeeAbsences", fields: [employeeId], references: [id])
+  employeeId  String
+  type        String   // falta, afastamento
+  startDate   DateTime
+  endDate     DateTime?
+  reason      String?
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+}
+
+// Modelo de Diário de Emoções
+model EmotionDiary {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  date        DateTime @default(now())
+  emotion     String
+  notes       String?
+}
+
+// Modelo de Gamificação
+model Gamification {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  points      Int
+  badges      Json
+  level       Int
+  updatedAt   DateTime @updatedAt
+}
+
+// Modelo de Comunidade
+model CommunityPost {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  content     String
+  createdAt   DateTime @default(now())
+  likes       Int      @default(0)
+  comments    Json
+}
+
+// Modelo de Notificação
+model Notification {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  title       String
+  message     String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+// Modelo de Insight de Negócio
+model BusinessInsight {
+  id          String   @id @default(uuid())
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+  type        String
+  data        Json
+  createdAt   DateTime @default(now())
+}
+
+// Modelo de Integração Contábil
+model AccountingExport {
+  id          String   @id @default(uuid())
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+  period      String
+  data        Json
+  createdAt   DateTime @default(now())
+}
+
+// Modelo de Nota Fiscal
+model Invoice {
+  id          String   @id @default(uuid())
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+  number      String
+  value       Float
+  issueDate   DateTime
+  status      String
+  client      User?    @relation(fields: [clientId], references: [id])
+  clientId    String?
+}
+
+// Modelo de Boleto
+model Boleto {
+  id          String   @id @default(uuid())
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+  value       Float
+  dueDate     DateTime
+  status      String
+  client      User?    @relation(fields: [clientId], references: [id])
+  clientId    String?
+}
+
+// Modelo de Wearable
+model WearableData {
+  id          String   @id @default(uuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  date        DateTime @default(now())
+  steps       Int?
+  sleepHours  Float?
+  calories    Float?
+  heartRate   Int?
+  data        Json
 }
 
 // Enums

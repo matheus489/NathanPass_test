@@ -8,6 +8,7 @@ import { Input } from "@nathanpass/ui";
 import { Label } from "@nathanpass/ui";
 import { toast } from "sonner";
 import { UserPlus, User, Mail, Lock, Building } from 'lucide-react';
+import { API_BASE } from "@/services/api";
 
 const ROLES = [
   { value: 'MERCHANT', label: 'Comerciante' },
@@ -38,7 +39,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -53,7 +54,10 @@ export default function RegisterPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Falha no cadastro");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Erro detalhado do backend:", errorData);
+        toast.error(errorData.errors?.[0]?.message || errorData.message || "Falha no cadastro");
+        throw new Error(errorData.message || "Falha no cadastro");
       }
 
       toast.success("Cadastro realizado com sucesso!");

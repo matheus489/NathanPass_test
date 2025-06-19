@@ -78,6 +78,26 @@
     {
       "question": "Como faço para sair da plataforma?",
       "answer": "Clique no menu do usuário no topo da tela e selecione 'Sair'." 
+    },
+    {
+      "question": "Como posso editar um lançamento financeiro já registrado?",
+      "answer": "Acesse a aba Financeiro, localize o lançamento desejado e clique no ícone de edição para alterar as informações."
+    },
+    {
+      "question": "É possível agendar pagamentos recorrentes?",
+      "answer": "Sim, ao criar um novo lançamento, selecione a opção de recorrência e defina a periodicidade desejada."
+    },
+    {
+      "question": "Como adiciono uma categoria personalizada de despesa?",
+      "answer": "No menu de configurações financeiras, clique em 'Categorias', depois em 'Adicionar Nova' e preencha os detalhes."
+    },
+    {
+      "question": "Posso importar clientes de uma planilha?",
+      "answer": "Sim, na aba Clientes, clique em 'Importar', selecione o arquivo CSV e siga as instruções para mapear os campos."
+    },
+    {
+      "question": "Como concedo acesso de administrador a um funcionário?",
+      "answer": "Na aba Funcionários, selecione o colaborador, clique em 'Editar Permissões' e marque a opção de administrador."
     }
   ]
   

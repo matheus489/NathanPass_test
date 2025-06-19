@@ -12,6 +12,7 @@ import {
 } from '@nathanpass/ui';
 import { Calendar, Clock, MapPin, User, X, CheckCircle2, AlertCircle, Clock as ClockIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { api } from '@/services/api';
 
 export function BookingList({ userId }) {
   const [bookings, setBookings] = useState([]);
@@ -19,31 +20,34 @@ export function BookingList({ userId }) {
   const [bookingError, setBookingError] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
 
-  // Carregar agendamentos do localStorage
   useEffect(() => {
-    function loadBookings() {
-      const stored = JSON.parse(localStorage.getItem('wellness_bookings') || '[]');
-      setBookings(stored);
-      setLoading(false);
+    async function fetchBookings() {
+      setLoading(true);
+      try {
+        const data = await api.get('/employee/bookings');
+        setBookings(data);
+      } catch (err) {
+        setBookingError('Erro ao carregar agendamentos');
+      } finally {
+        setLoading(false);
+      }
     }
-    loadBookings();
-    window.addEventListener('wellness_bookings_update', loadBookings);
-    return () => window.removeEventListener('wellness_bookings_update', loadBookings);
+    fetchBookings();
   }, []);
 
-  const handleCancelBooking = (bookingId) => {
+  async function handleCancelBooking(bookingId) {
     setBookingError("");
     setBookingLoading(true);
-    // TODO: trocar por chamada à API futuramente
-    setTimeout(() => {
-      const updated = bookings.filter((booking) => booking.id !== bookingId);
-      setBookings(updated);
-      localStorage.setItem('wellness_bookings', JSON.stringify(updated));
-      setBookingLoading(false);
+    try {
+      await api.delete(`/employee/bookings/${bookingId}`);
+      setBookings((prev) => prev.filter((b) => b.id !== bookingId));
       toast.success('Agendamento cancelado com sucesso!');
-      window.dispatchEvent(new Event('wellness_bookings_update'));
-    }, 600);
-  };
+    } catch (err) {
+      setBookingError('Erro ao cancelar agendamento');
+    } finally {
+      setBookingLoading(false);
+    }
+  }
 
   const getStatusInfo = (status) => {
     switch (status) {

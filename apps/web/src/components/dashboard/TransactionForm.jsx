@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@nathanpass/ui";
 import { toast } from "sonner";
+import { api } from "@/services/api";
 
 const TRANSACTION_TYPES = [
   { value: "income", label: "Receita" },
@@ -49,8 +50,12 @@ export function TransactionForm({ onSuccess }) {
     setLoading(true);
 
     try {
-      // TODO: Implementar envio real
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const payload = {
+        ...formData,
+        amount: parseFloat(formData.amount),
+        // Adicionar outros campos necessários
+      };
+      await api.post("/financial/transactions", payload);
       toast.success("Transação registrada com sucesso!");
       onSuccess?.();
       setFormData({

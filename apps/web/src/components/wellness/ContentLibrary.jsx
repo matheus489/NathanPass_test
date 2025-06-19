@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Input,
   Select,
@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@nathanpass/ui";
 import { Search, BookOpen, Clock, ArrowRight, Book, Video, Headphones, FileText } from "lucide-react";
+import { api } from "@/services/api";
 
 const CATEGORIES = [
   { value: "all", label: "Todos", icon: Book },
@@ -26,34 +27,19 @@ export function ContentLibrary() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Simular carregamento de dados
-  useState(() => {
-    setTimeout(() => {
-      setContents([
-        {
-          id: 1,
-          title: "Guia de Meditação para Iniciantes",
-          description: "Aprenda técnicas básicas de meditação para reduzir o estresse e melhorar o foco.",
-          category: "articles",
-          duration: "10 min",
-        },
-        {
-          id: 2,
-          title: "Yoga para o Dia a Dia",
-          description: "Sequência de poses de yoga para praticar em casa e melhorar a flexibilidade.",
-          category: "videos",
-          duration: "20 min",
-        },
-        {
-          id: 3,
-          title: "Alimentação Consciente",
-          description: "Dicas para desenvolver uma relação mais saudável com a comida.",
-          category: "podcasts",
-          duration: "45 min",
-        },
-      ]);
-      setLoading(false);
-    }, 1000);
+  useEffect(() => {
+    async function fetchContents() {
+      setLoading(true);
+      try {
+        const data = await api.get('/wellness/content');
+        setContents(data);
+      } catch (err) {
+        // Pode exibir erro se desejar
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchContents();
   }, []);
 
   const filteredContents = contents.filter((content) => {

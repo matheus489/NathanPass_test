@@ -1,6 +1,7 @@
-const { prisma } = require("@nathanpass/database");
+const { pool } = require("../config");
 const { AppError } = require("../middlewares/error-handler");
 const { z } = require("zod");
+const { v4: uuidv4 } = require("uuid");
 
 const serviceSchema = z.object({
   name: z.string(),
@@ -240,6 +241,51 @@ const updateBookingStatus = async (req, res, next) => {
   }
 };
 
+const updateProfile = async (req, res) => {/* TODO */};
+const listBookings = async (req, res) => {/* TODO */};
+const listPayments = async (req, res) => {/* TODO */};
+const requestPayout = async (req, res) => {/* TODO */};
+const partnerReport = async (req, res) => {
+  try {
+    const companyId = req.user?.company_id || req.query.companyId || 1;
+    // Total de vendas (soma das receitas)
+    const [sales] = await pool.query(
+      "SELECT SUM(amount) as totalSales FROM financial_transactions WHERE company_id = ? AND type = 'income'",
+      [companyId]
+    );
+    // Funcionários ativos
+    const [employees] = await pool.query(
+      "SELECT COUNT(*) as activeEmployees FROM users WHERE company_id = ? AND role = 'EMPLOYEE'",
+      [companyId]
+    );
+    // Transações do dia
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const [transactionsToday] = await pool.query(
+      "SELECT COUNT(*) as transactionsToday FROM financial_transactions WHERE company_id = ? AND DATE(date) = ?",
+      [companyId, todayStr]
+    );
+    // Ticket médio
+    const [ticket] = await pool.query(
+      "SELECT AVG(amount) as avgTicket FROM financial_transactions WHERE company_id = ? AND type = 'income'",
+      [companyId]
+    );
+    res.json({
+      totalSales: sales[0].totalSales || 0,
+      activeEmployees: employees[0].activeEmployees || 0,
+      transactionsToday: transactionsToday[0].transactionsToday || 0,
+      avgTicket: ticket[0].avgTicket || 0,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+const integratePDV = async (req, res) => {/* TODO */};
+const createLiveClass = async (req, res) => {/* TODO */};
+const listLiveClasses = async (req, res) => {/* TODO */};
+const analyzeExercise = async (req, res) => {/* TODO */};
+const syncWearable = async (req, res) => {/* TODO */};
+
 module.exports = {
   createService,
   updateService,
@@ -248,4 +294,14 @@ module.exports = {
   getService,
   getBookings,
   updateBookingStatus,
+  updateProfile,
+  listBookings,
+  listPayments,
+  requestPayout,
+  partnerReport,
+  integratePDV,
+  createLiveClass,
+  listLiveClasses,
+  analyzeExercise,
+  syncWearable,
 }; 

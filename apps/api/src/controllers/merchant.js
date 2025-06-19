@@ -1,6 +1,7 @@
-const { prisma } = require("@nathanpass/database");
+const { pool } = require("../config");
 const { AppError } = require("../middlewares/error-handler");
 const { z } = require("zod");
+const { v4: uuidv4 } = require("uuid");
 
 const companySchema = z.object({
   name: z.string(),
@@ -23,20 +24,14 @@ const createCompany = async (req, res, next) => {
     if (req.user?.role !== "MERCHANT") {
       throw new AppError(403, "Only merchants can create companies");
     }
-
     const companyData = companySchema.parse(req.body);
-
-    const company = await prisma.company.create({
-      data: {
-        ...companyData,
-        merchantId: req.user.id,
-      },
-    });
-
-    res.status(201).json({
-      status: "success",
-      data: { company },
-    });
+    const companyId = uuidv4();
+    await pool.query(
+      `INSERT INTO companies (id, name, industry, size, address, contact_email, contact_phone, merchant_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [companyId, companyData.name, companyData.industry, companyData.size, companyData.address, companyData.contactEmail, companyData.contactPhone, req.user.id]
+    );
+    res.status(201).json({ status: "success", data: { company: { id: companyId, ...companyData, merchantId: req.user.id } } });
   } catch (error) {
     next(error);
   }
@@ -47,31 +42,17 @@ const updateCompany = async (req, res, next) => {
     if (req.user?.role !== "MERCHANT") {
       throw new AppError(403, "Only merchants can update companies");
     }
-
     const { id } = req.params;
     const companyData = companySchema.parse(req.body);
-
-    const company = await prisma.company.findUnique({
-      where: { id },
-    });
-
-    if (!company) {
-      throw new AppError(404, "Company not found");
-    }
-
-    if (company.merchantId !== req.user.id) {
-      throw new AppError(403, "Not authorized to update this company");
-    }
-
-    const updatedCompany = await prisma.company.update({
-      where: { id },
-      data: companyData,
-    });
-
-    res.json({
-      status: "success",
-      data: { company: updatedCompany },
-    });
+    const [companies] = await pool.query(`SELECT * FROM companies WHERE id = ?`, [id]);
+    const company = companies[0];
+    if (!company) throw new AppError(404, "Company not found");
+    if (company.merchant_id !== req.user.id) throw new AppError(403, "Not authorized to update this company");
+    await pool.query(
+      `UPDATE companies SET name=?, industry=?, size=?, address=?, contact_email=?, contact_phone=?, updated_at=NOW() WHERE id=?`,
+      [companyData.name, companyData.industry, companyData.size, companyData.address, companyData.contactEmail, companyData.contactPhone, id]
+    );
+    res.json({ status: "success", data: { company: { ...company, ...companyData } } });
   } catch (error) {
     next(error);
   }
@@ -80,30 +61,14 @@ const updateCompany = async (req, res, next) => {
 const getCompany = async (req, res, next) => {
   try {
     const { id } = req.params;
-
-    const company = await prisma.company.findUnique({
-      where: { id },
-      include: {
-        employees: true,
-        subscriptions: true,
-      },
-    });
-
-    if (!company) {
-      throw new AppError(404, "Company not found");
-    }
-
-    if (
-      req.user?.role !== "MERCHANT" ||
-      (req.user.role === "MERCHANT" && company.merchantId !== req.user.id)
-    ) {
-      throw new AppError(403, "Not authorized to view this company");
-    }
-
-    res.json({
-      status: "success",
-      data: { company },
-    });
+    const [companies] = await pool.query(`SELECT * FROM companies WHERE id = ?`, [id]);
+    const company = companies[0];
+    if (!company) throw new AppError(404, "Company not found");
+    if (req.user?.role !== "MERCHANT" || company.merchant_id !== req.user.id) throw new AppError(403, "Not authorized to view this company");
+    // Buscar funcionários e assinaturas
+    const [employees] = await pool.query(`SELECT * FROM users WHERE company_id = ? AND role = 'EMPLOYEE'`, [id]);
+    // Supondo que subscriptions não está implementado, pode ser adicionado depois
+    res.json({ status: "success", data: { company: { ...company, employees } } });
   } catch (error) {
     next(error);
   }
@@ -114,26 +79,11 @@ const getEmployees = async (req, res, next) => {
     if (req.user?.role !== "MERCHANT") {
       throw new AppError(403, "Only merchants can view employees");
     }
-
-    const company = await prisma.company.findFirst({
-      where: { merchantId: req.user.id },
-    });
-
-    if (!company) {
-      throw new AppError(404, "Company not found");
-    }
-
-    const employees = await prisma.user.findMany({
-      where: {
-        companyId: company.id,
-        role: "EMPLOYEE",
-      },
-    });
-
-    res.json({
-      status: "success",
-      data: { employees },
-    });
+    const [companies] = await pool.query(`SELECT * FROM companies WHERE merchant_id = ?`, [req.user.id]);
+    const company = companies[0];
+    if (!company) throw new AppError(404, "Company not found");
+    const [employees] = await pool.query(`SELECT * FROM users WHERE company_id = ? AND role = 'EMPLOYEE'`, [company.id]);
+    res.json({ status: "success", data: { employees } });
   } catch (error) {
     next(error);
   }
@@ -144,37 +94,18 @@ const addEmployee = async (req, res, next) => {
     if (req.user?.role !== "MERCHANT") {
       throw new AppError(403, "Only merchants can add employees");
     }
-
     const employeeData = employeeSchema.parse(req.body);
-
-    const company = await prisma.company.findFirst({
-      where: { merchantId: req.user.id },
-    });
-
-    if (!company) {
-      throw new AppError(404, "Company not found");
-    }
-
-    const existingUser = await prisma.user.findUnique({
-      where: { email: employeeData.email },
-    });
-
-    if (existingUser) {
-      throw new AppError(400, "Email already registered");
-    }
-
-    const employee = await prisma.user.create({
-      data: {
-        ...employeeData,
-        role: "EMPLOYEE",
-        companyId: company.id,
-      },
-    });
-
-    res.status(201).json({
-      status: "success",
-      data: { employee },
-    });
+    const [companies] = await pool.query(`SELECT * FROM companies WHERE merchant_id = ?`, [req.user.id]);
+    const company = companies[0];
+    if (!company) throw new AppError(404, "Company not found");
+    const [existingUsers] = await pool.query(`SELECT * FROM users WHERE email = ?`, [employeeData.email]);
+    if (existingUsers.length > 0) throw new AppError(400, "Email already registered");
+    const employeeId = uuidv4();
+    await pool.query(
+      `INSERT INTO users (id, email, name, role, company_id, position, department, created_at, updated_at) VALUES (?, ?, ?, 'EMPLOYEE', ?, ?, ?, NOW(), NOW())`,
+      [employeeId, employeeData.email, employeeData.name, company.id, employeeData.position, employeeData.department]
+    );
+    res.status(201).json({ status: "success", data: { employee: { id: employeeId, ...employeeData, companyId: company.id } } });
   } catch (error) {
     next(error);
   }
@@ -185,33 +116,14 @@ const removeEmployee = async (req, res, next) => {
     if (req.user?.role !== "MERCHANT") {
       throw new AppError(403, "Only merchants can remove employees");
     }
-
     const { id } = req.params;
-
-    const company = await prisma.company.findFirst({
-      where: { merchantId: req.user.id },
-    });
-
-    if (!company) {
-      throw new AppError(404, "Company not found");
-    }
-
-    const employee = await prisma.user.findUnique({
-      where: { id },
-    });
-
-    if (!employee || employee.companyId !== company.id) {
-      throw new AppError(404, "Employee not found");
-    }
-
-    await prisma.user.delete({
-      where: { id },
-    });
-
-    res.json({
-      status: "success",
-      data: null,
-    });
+    const [companies] = await pool.query(`SELECT * FROM companies WHERE merchant_id = ?`, [req.user.id]);
+    const company = companies[0];
+    if (!company) throw new AppError(404, "Company not found");
+    const [employees] = await pool.query(`SELECT * FROM users WHERE id = ? AND company_id = ? AND role = 'EMPLOYEE'`, [id, company.id]);
+    if (employees.length === 0) throw new AppError(404, "Employee not found");
+    await pool.query(`DELETE FROM users WHERE id = ?`, [id]);
+    res.json({ status: "success", message: "Employee removed" });
   } catch (error) {
     next(error);
   }
@@ -222,35 +134,18 @@ const updateEmployee = async (req, res, next) => {
     if (req.user?.role !== "MERCHANT") {
       throw new AppError(403, "Only merchants can update employees");
     }
-
     const { id } = req.params;
     const employeeData = employeeSchema.parse(req.body);
-
-    const company = await prisma.company.findFirst({
-      where: { merchantId: req.user.id },
-    });
-
-    if (!company) {
-      throw new AppError(404, "Company not found");
-    }
-
-    const employee = await prisma.user.findUnique({
-      where: { id },
-    });
-
-    if (!employee || employee.companyId !== company.id) {
-      throw new AppError(404, "Employee not found");
-    }
-
-    const updatedEmployee = await prisma.user.update({
-      where: { id },
-      data: employeeData,
-    });
-
-    res.json({
-      status: "success",
-      data: { employee: updatedEmployee },
-    });
+    const [companies] = await pool.query(`SELECT * FROM companies WHERE merchant_id = ?`, [req.user.id]);
+    const company = companies[0];
+    if (!company) throw new AppError(404, "Company not found");
+    const [employees] = await pool.query(`SELECT * FROM users WHERE id = ? AND company_id = ? AND role = 'EMPLOYEE'`, [id, company.id]);
+    if (employees.length === 0) throw new AppError(404, "Employee not found");
+    await pool.query(
+      `UPDATE users SET name = ?, position = ?, department = ?, updated_at = NOW() WHERE id = ?`,
+      [employeeData.name, employeeData.position, employeeData.department, id]
+    );
+    res.json({ status: "success", message: "Employee updated" });
   } catch (error) {
     next(error);
   }

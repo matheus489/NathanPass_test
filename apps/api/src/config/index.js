@@ -1,12 +1,20 @@
 const { z } = require('zod');
+require('dotenv').config();
+const mysql = require('mysql2/promise');
 
 const envSchema = z.object({
   // Configuração do Servidor
   PORT: z.string().transform(Number).default('3001'),
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
 
   // Configuração do Banco de Dados
-  DATABASE_URL: z.string(),
+  DB_HOST: z.string().default('127.0.0.1'),
+  DB_PORT: z.string().transform(Number).default('3306'),
+  DB_USER: z.string().default('root'),
+  DB_PASS: z.string().default(''),
+  DB_NAME: z.string().default('nathanpass'),
 
   // Configuração do JWT
   JWT_SECRET: z.string(),
@@ -34,7 +42,11 @@ const config = {
     nodeEnv: env.NODE_ENV,
   },
   database: {
-    url: env.DATABASE_URL,
+    host: env.DB_HOST,
+    port: env.DB_PORT,
+    user: env.DB_USER,
+    password: env.DB_PASS,
+    name: env.DB_NAME,
   },
   jwt: {
     secret: env.JWT_SECRET,
@@ -55,4 +67,15 @@ const config = {
   },
 };
 
-module.exports = { config }; 
+const pool = mysql.createPool({
+  host: env.DB_HOST,
+  port: env.DB_PORT,
+  user: env.DB_USER,
+  password: env.DB_PASS,
+  database: env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
+
+module.exports = { config, pool }; 

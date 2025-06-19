@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,44 +10,28 @@ import {
   TableRow,
 } from "@nathanpass/ui";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { api } from "@/services/api";
 
 export function TransactionList() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Simular carregamento de dados
-  useState(() => {
-    const mockTransactions = [
-      {
-        id: 1,
-        type: "income",
-        amount: 1500.00,
-        description: "Venda de serviço",
-        date: "2024-03-20",
-        category: "sales",
-      },
-      {
-        id: 2,
-        type: "expense",
-        amount: 500.00,
-        description: "Compra de materiais",
-        date: "2024-03-19",
-        category: "supplies",
-      },
-      {
-        id: 3,
-        type: "income",
-        amount: 2000.00,
-        description: "Pagamento de cliente",
-        date: "2024-03-18",
-        category: "sales",
-      },
-    ];
-
-    setTimeout(() => {
-      setTransactions(mockTransactions);
-      setLoading(false);
-    }, 1000);
+  useEffect(() => {
+    async function fetchTransactions() {
+      setLoading(true);
+      try {
+        // Supondo que companyId está disponível via contexto ou props
+        const companyId = 1;
+        const data = await api.get(`/financial/transactions/${companyId}`);
+        setTransactions(data);
+      } catch (err) {
+        setError("Erro ao carregar transações");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTransactions();
   }, []);
 
   if (loading) {
