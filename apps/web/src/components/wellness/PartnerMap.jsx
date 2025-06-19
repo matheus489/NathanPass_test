@@ -11,7 +11,7 @@ import {
   Input,
   Button,
 } from '@nathanpass/ui';
-import { MapPin, Search, Star, Clock, Phone, ExternalLink } from 'lucide-react';
+import { MapPin, Search, Star, Clock, Phone, ExternalLink, Map } from 'lucide-react';
 
 export function PartnerMap() {
   const [partners, setPartners] = useState([]);
@@ -68,6 +68,15 @@ export function PartnerMap() {
     (partner) => partner.distance <= parseFloat(searchRadius)
   );
 
+  // Função para abrir todos os parceiros no Google Maps
+  function openAllPartnersOnMap() {
+    if (filteredPartners.length === 0) return;
+    // Monta uma query com todos os endereços separados por |
+    const addresses = filteredPartners.map(p => encodeURIComponent(p.address)).join('|');
+    // Abre o Google Maps com busca por múltiplos endereços
+    window.open(`https://www.google.com/maps/dir/${addresses}`, '_blank');
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -78,8 +87,8 @@ export function PartnerMap() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             type="number"
@@ -89,6 +98,14 @@ export function PartnerMap() {
             className="pl-9 bg-background/50 backdrop-blur-sm"
           />
         </div>
+        <Button
+          variant="outline"
+          className="flex items-center gap-2 mt-2 sm:mt-0 whitespace-nowrap"
+          onClick={openAllPartnersOnMap}
+          disabled={filteredPartners.length === 0}
+        >
+          <Map className="w-4 h-4" /> Ver parceiros no mapa
+        </Button>
       </div>
 
       <div className="w-full grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -128,10 +145,17 @@ export function PartnerMap() {
                 {partner.distance} km de distância
               </div>
             </CardContent>
-            <CardFooter>
-              <Button className="w-full group-hover:bg-primary/90 transition-colors">
-                Ver detalhes
+            <CardFooter className="flex flex-col gap-2">
+              <Button
+                className="w-full group-hover:bg-primary/90 transition-colors"
+                onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(partner.address)}`, '_blank')}
+                variant="default"
+              >
+                Ver no Google Maps
                 <ExternalLink className="w-4 h-4 ml-2" />
+              </Button>
+              <Button className="w-full" variant="outline">
+                Ver detalhes
               </Button>
             </CardFooter>
           </Card>
