@@ -1,17 +1,22 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { ContentLibrary } from '@/components/wellness/ContentLibrary';
 import { PartnerMap } from '@/components/wellness/PartnerMap';
 import { BookingList } from '@/components/wellness/BookingList';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@nathanpass/ui';
 import { Heart, BookOpen, MapPin, Calendar } from 'lucide-react';
 
 export default function WellnessPage() {
   const { user } = useAuth();
-  // const router = useRouter();
+  const [activeTab, setActiveTab] = useState('content');
+
+  const tabList = [
+    { key: 'content', label: 'Biblioteca de Conteúdo', icon: <BookOpen className="w-5 h-5" /> },
+    { key: 'partners', label: 'Parceiros', icon: <MapPin className="w-5 h-5" /> },
+    { key: 'bookings', label: 'Minhas Consultas', icon: <Calendar className="w-5 h-5" /> },
+  ];
 
   // useEffect(() => {
   //   if (!user) {
@@ -40,37 +45,28 @@ export default function WellnessPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="content" className="space-y-8">
-          <TabsList className="bg-primary/5 p-1 rounded-lg flex gap-2">
-            <TabsTrigger value="content" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <BookOpen className="w-5 h-5" /> Biblioteca de Conteúdo
-            </TabsTrigger>
-            <TabsTrigger value="partners" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <MapPin className="w-5 h-5" /> Parceiros
-            </TabsTrigger>
-            <TabsTrigger value="bookings" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Calendar className="w-5 h-5" /> Minhas Consultas
-            </TabsTrigger>
-          </TabsList>
+        {/* Tabs customizadas */}
+        <div className="flex gap-8 bg-slate-100 rounded-xl p-4 w-fit mx-auto my-6">
+          {tabList.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition font-medium text-base
+                ${activeTab === tab.key ? "bg-white shadow text-blue-600" : "text-slate-600 hover:bg-slate-200"}
+              `}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-          <TabsContent value="content">
-            <div className="mt-12 flex flex-col gap-8">
-              <ContentLibrary />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="partners">
-            <div className="mt-12 flex flex-col gap-8">
-              <PartnerMap />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="bookings">
-            <div className="mt-12 flex flex-col gap-8">
-              <BookingList />
-            </div>
-          </TabsContent>
-        </Tabs>
+        {/* Conteúdo das abas */}
+        <div className="mt-12 flex flex-col gap-8">
+          {activeTab === 'content' && <ContentLibrary />}
+          {activeTab === 'partners' && <PartnerMap />}
+          {activeTab === 'bookings' && <BookingList />}
+        </div>
       </div>
     </div>
   );
